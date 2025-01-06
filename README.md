@@ -105,15 +105,15 @@ gameState: Sends the updated game state to the clients.
 
 Canvas Rendering:
 
-The game is rendered on an HTML5 <canvas> element.
-Paddles, ball, obstacles, and scores are drawn using the CanvasRenderingContext2d.
-Game State Management:
+Canvas Rendering: The game is rendered on an HTML5 <canvas> element, utilizing the CanvasRenderingContext2d API to draw the paddles, ball, obstacles, and scores.
 
-The state is managed with React hooks (useState, useEffect).
-Socket.IO is used to listen for game state updates and emit paddle movements or score changes.
+Game State Management: State is managed using React hooks (useState, useEffect), which allows for dynamic and responsive updates to game variables. Socket.IO facilitates communication by listening for game state updates (such as paddle positions, ball state, scores, and obstacles) and emitting events for actions like paddle movements or score changes.
+
 Paddle Movement:
 
-Player 1 uses the W and S keys to move their paddle, while Player 2 uses the arrow keys.
+Player 1 uses the W (up) and S (down) keys to control their paddle.
+Player 2 uses the ArrowUp (up) and ArrowDown (down) keys to move their paddle.
+To optimize the performance of paddle movement handling, useCallback is used for the paddle movement functions (movePaddle1 and movePaddle2). This ensures that the functions are only redefined when their dependencies (paddle positions) change, preventing unnecessary re-renders and improving efficiency. These callbacks trigger socket emissions, which synchronize the paddle positions across all clients in real-time.
 
 ### Ball Logic:
 
