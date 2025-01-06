@@ -42,26 +42,38 @@ const App = () => {
     };
   }, []);
 
-  // Paddle and ball movement with useCallback
+  // Paddle movement with useCallback
   const movePaddle1 = useCallback((e) => {
     if (e.key === "w" && paddle1Y > 0) {
-      setPaddle1Y(paddle1Y - 10);
-      socket.emit("movePaddle", { paddle1Y: paddle1Y - 10 });
+      setPaddle1Y(prevPaddle1Y => {
+        const newY = prevPaddle1Y - 10;
+        socket.emit("movePaddle", { paddle1Y: newY });
+        return newY;
+      });
     }
     if (e.key === "s" && paddle1Y < 340) {
-      setPaddle1Y(paddle1Y + 10);
-      socket.emit("movePaddle", { paddle1Y: paddle1Y + 10 });
+      setPaddle1Y(prevPaddle1Y => {
+        const newY = prevPaddle1Y + 10;
+        socket.emit("movePaddle", { paddle1Y: newY });
+        return newY;
+      });
     }
   }, [paddle1Y]);
 
   const movePaddle2 = useCallback((e) => {
     if (e.key === "ArrowUp" && paddle2Y > 0) {
-      setPaddle2Y(paddle2Y - 10);
-      socket.emit("movePaddle", { paddle2Y: paddle2Y - 10 });
+      setPaddle2Y(prevPaddle2Y => {
+        const newY = prevPaddle2Y - 10;
+        socket.emit("movePaddle", { paddle2Y: newY });
+        return newY;
+      });
     }
     if (e.key === "ArrowDown" && paddle2Y < 340) {
-      setPaddle2Y(paddle2Y + 10);
-      socket.emit("movePaddle", { paddle2Y: paddle2Y + 10 });
+      setPaddle2Y(prevPaddle2Y => {
+        const newY = prevPaddle2Y + 10;
+        socket.emit("movePaddle", { paddle2Y: newY });
+        return newY;
+      });
     }
   }, [paddle2Y]);
 
@@ -80,61 +92,63 @@ const App = () => {
 
   // Ball update and game loop with useCallback
   const updateGame = useCallback(() => {
-    const updatedBall = { ...ball };
-    updatedBall.x += updatedBall.vx;
-    updatedBall.y += updatedBall.vy;
+    setBall(prevBall => {
+      const updatedBall = { ...prevBall };
+      updatedBall.x += updatedBall.vx;
+      updatedBall.y += updatedBall.vy;
 
-    // Ball collisions with walls
-    if (updatedBall.y <= 0 || updatedBall.y >= 390) {
-      updatedBall.vy = -updatedBall.vy;
-    }
-
-    // Ball collisions with paddles
-    if (
-      updatedBall.x <= 40 &&
-      updatedBall.y >= paddle1Y &&
-      updatedBall.y <= paddle1Y + 60
-    ) {
-      updatedBall.vx = -updatedBall.vx;
-    }
-    if (
-      updatedBall.x >= 550 &&
-      updatedBall.y >= paddle2Y &&
-      updatedBall.y <= paddle2Y + 60
-    ) {
-      updatedBall.vx = -updatedBall.vx;
-    }
-
-    // Ball collisions with obstacles
-    obstacles.forEach((obstacle) => {
-      if (
-        updatedBall.x >= obstacle.x &&
-        updatedBall.x <= obstacle.x + 50 &&
-        updatedBall.y >= obstacle.y &&
-        updatedBall.y <= obstacle.y + 50
-      ) {
-        updatedBall.vx = -updatedBall.vx;
+      // Ball collisions with walls
+      if (updatedBall.y <= 0 || updatedBall.y >= 390) {
         updatedBall.vy = -updatedBall.vy;
       }
+
+      // Ball collisions with paddles
+      if (
+        updatedBall.x <= 40 &&
+        updatedBall.y >= paddle1Y &&
+        updatedBall.y <= paddle1Y + 60
+      ) {
+        updatedBall.vx = -updatedBall.vx;
+      }
+      if (
+        updatedBall.x >= 550 &&
+        updatedBall.y >= paddle2Y &&
+        updatedBall.y <= paddle2Y + 60
+      ) {
+        updatedBall.vx = -updatedBall.vx;
+      }
+
+      // Ball collisions with obstacles
+      obstacles.forEach((obstacle) => {
+        if (
+          updatedBall.x >= obstacle.x &&
+          updatedBall.x <= obstacle.x + 50 &&
+          updatedBall.y >= obstacle.y &&
+          updatedBall.y <= obstacle.y + 50
+        ) {
+          updatedBall.vx = -updatedBall.vx;
+          updatedBall.vy = -updatedBall.vy;
+        }
+      });
+
+      // Ball out of bounds (scoring)
+      if (updatedBall.x <= 0) {
+        socket.emit("score", { playerScored: 2 });
+        updatedBall.x = 300;
+        updatedBall.y = 200;
+        updatedBall.vx = 4;
+        updatedBall.vy = 4;
+      } else if (updatedBall.x >= 600) {
+        socket.emit("score", { playerScored: 1 });
+        updatedBall.x = 300;
+        updatedBall.y = 200;
+        updatedBall.vx = -4;
+        updatedBall.vy = 4;
+      }
+
+      return updatedBall;
     });
-
-    // Ball out of bounds (scoring)
-    if (updatedBall.x <= 0) {
-      socket.emit("score", { playerScored: 2 });
-      updatedBall.x = 300;
-      updatedBall.y = 200;
-      updatedBall.vx = 4;
-      updatedBall.vy = 4;
-    } else if (updatedBall.x >= 600) {
-      socket.emit("score", { playerScored: 1 });
-      updatedBall.x = 300;
-      updatedBall.y = 200;
-      updatedBall.vx = -4;
-      updatedBall.vy = 4;
-    }
-
-    setBall(updatedBall);
-  }, [ball, paddle1Y, paddle2Y, obstacles]);
+  }, [paddle1Y, paddle2Y, obstacles]);
 
   // Game rendering
   useEffect(() => {

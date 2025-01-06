@@ -55,17 +55,24 @@ def check_collisions():
         game_state["player1Score"] += 1
         reset_ball()
 
+
 # Helper function to reset the ball after scoring
 def reset_ball():
     game_state["ball"] = {"x": 300, "y": 200, "radius": 10, "vx": 4, "vy": 4}
 
+
 # Socket.IO event for handling paddle movement
+@socketio.on("movePaddle")
 @socketio.on("movePaddle")
 def handle_move_paddle(data):
     if "paddle1Y" in data:
         game_state["paddle1Y"] = data["paddle1Y"]
     if "paddle2Y" in data:
         game_state["paddle2Y"] = data["paddle2Y"]
+
+    # Emit updated game state after paddle move (without resetting ball)
+    socketio.emit("gameState", game_state, broadcast=True)
+
 
 # Socket.IO event for handling scoring
 @socketio.on("score")
@@ -89,6 +96,7 @@ def game_loop():
     game_state["ball"]["y"] += game_state["ball"]["vy"]
     check_collisions()
     socketio.emit("gameState", game_state, room=None)   # Emit game state to all clients
+
 
 
 # Start the game loop as a background task

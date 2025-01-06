@@ -36,6 +36,8 @@ This project implements a real-time multiplayer Pong game with obstacles. The ga
 
 ```
 cd backend
+python -m venv myenv
+source myenv/bin/activate or .\myenv\Scripts\activate #virtual env
 pip install -r requirements.txt
 ```
 
